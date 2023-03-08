@@ -1,0 +1,81 @@
+---
+title: '<a href="https://www.huber.embl.de/msmb/11-chap.html">Working with Image Data: </a>'
+author: Wolfgang Huber
+date: 2023-03-23
+date-format: iso
+format:
+  revealjs: 
+    theme: [default, wh.scss]
+    logo: fig/ukraine.png
+    transition: slide
+    scrollable: true
+    slide-number: c/t
+    show-slide-number: all
+    auto-stretch: false
+# auto-stretch is a huge source of grief for slide layout, see https://quarto.org/docs/presentations/revealjs/advanced.html --> stretch
+  html:
+    code-line-numbers: false
+execute: 
+  echo: true
+  warning: true
+  error: false
+  message: false
+slide-level: 1
+# bibliography: refs.bib
+editor_options: 
+  chunk_output_type: console
+---
+
+# Reading and displaying an image
+
+```{r}
+#| label: setup
+#| echo: false
+knitr::opts_chunk$set(cache = TRUE, autodep = TRUE)
+options(EBImage.display = "raster")
+```
+
+```{r}
+#| label: read
+#| message: false
+library("EBImage")
+imagefile = system.file("images", "mosquito.png", package = "MSMB")
+imagefile
+mosq = readImage(imagefile)
+display(mosq)
+```
+
+# Reading and displaying an image
+
+```{r demo}
+m = 1 - mosq
+display(m)
+
+m = mosq * 3
+display(m)
+
+m = mosq ^ (1/3)
+display(m)
+
+m   = mosq[100:438, 112:550]
+display(m)
+
+m = mosq > 0.5
+display(m)
+
+m = transpose(mosq)
+display(m)
+
+m = EBImage::rotate(mosq, angle = 30)
+display(m)
+
+m = translate(mosq, v = c(40, 70))
+display(m)
+
+m  = flip(mosq)
+display(m)
+
+m  = flop(mosq)
+display(m)
+```
+
