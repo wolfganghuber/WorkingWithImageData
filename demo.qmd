@@ -5,28 +5,32 @@ date: 2023-03-23
 date-format: iso
 format:
   revealjs: 
-    theme: [default, wh.scss]
+    theme: wh.scss
     logo: fig/ukraine.png
     transition: slide
     scrollable: true
     slide-number: c/t
     show-slide-number: all
     auto-stretch: false
-# auto-stretch is a huge source of grief for slide layout, see https://quarto.org/docs/presentations/revealjs/advanced.html --> stretch
-  html:
     code-line-numbers: false
+    code-copy: true
+    code-link: true
+    code-block-bg: true
+    code-block-border-left: "#31BAE9"
 execute: 
   echo: true
   warning: true
   error: false
   message: false
 slide-level: 1
-# bibliography: refs.bib
-editor_options: 
-  chunk_output_type: console
 ---
 
 # Reading and displaying an image
+
+<!--Notes on the YAML header:
+ - auto-stretch is a huge source of grief for slide layout, see https://quarto.org/docs/presentations/revealjs/advanced.html - stretch
+-->
+
 
 ```{r}
 #| label: setup
@@ -37,7 +41,6 @@ options(EBImage.display = "raster")
 
 ```{r}
 #| label: read
-#| message: false
 library("EBImage")
 imagefile = system.file("images", "mosquito.png", package = "MSMB")
 imagefile
@@ -45,37 +48,93 @@ mosq = readImage(imagefile)
 display(mosq)
 ```
 
-# Reading and displaying an image
+# Algebraic computations 
 
-```{r demo}
+```{r}
 m = 1 - mosq
 display(m)
+```
 
+# Algebraic computations 
+
+```{r}
 m = mosq * 3
 display(m)
+```
 
+# Computations. An image is just an array 
+
+```{r}
 m = mosq ^ (1/3)
 display(m)
+```
 
-m   = mosq[100:438, 112:550]
+# Thresholding
+
+```{r}
+m = mosq > quantile(mosq, prob = 0.1)
 display(m)
+```
 
-m = mosq > 0.5
-display(m)
-
+```{r}
 m = transpose(mosq)
 display(m)
+```
 
+```{r}
 m = EBImage::rotate(mosq, angle = 30)
 display(m)
+```
 
+```{r}
 m = translate(mosq, v = c(40, 70))
 display(m)
+```
 
+```{r}
 m  = flip(mosq)
 display(m)
+```
 
+```{r}
 m  = flop(mosq)
 display(m)
 ```
 
+
+# Subsetting ('cropping')
+
+```{r}
+m   = mosq[100:438, 112:550]
+display(m)
+```
+
+# Stitching
+
+```{r}
+#| label: stitching1
+#| echo: false
+# This code chunk produces 4 individual tiles from the big initial image
+ukraine_joewdavies = readImage("fig/ukraine_joewdavis.jpg")
+sx = dim(ukraine_joewdavies)[1] / 2
+sy = dim(ukraine_joewdavies)[2] / 2
+tiles = list(ukraine_joewdavies[     1:sx    ,      1:sy, ], 
+             ukraine_joewdavies[(sx+1):(2*sx),      1:sy, ], 
+             ukraine_joewdavies[     1:sx    , (sy+1):(2*sy), ], 
+             ukraine_joewdavies[(sx+1):(2*sx), (sy+1):(2*sy), ])
+for (i in seq(along = tiles))
+  writeImage(tiles[[i]], files = file.path("fig", sprintf("tile%03d.tiff", i)))
+```
+```{r}
+#| label: stitching2
+tiles = dir("fig", pattern = "^tile.*.tiff$", full.names = TRUE) |> lapply(readImage) 
+length(tiles)
+tiles[[1]]
+```
+```{r}
+#| label: stitching3
+#| layout-nrow: 1
+#| fig-width:  !expr dim(ukraine_joewdavies)[1] / 2000
+#| fig-height: !expr dim(ukraine_joewdavies)[2] / 2000
+for (x in tiles) display(x)
+```
