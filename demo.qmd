@@ -42,70 +42,90 @@ options(EBImage.display = "raster")
 ```{r}
 #| label: read
 library("EBImage")
-imagefile = system.file("images", "mosquito.png", package = "MSMB")
-imagefile
-mosq = readImage(imagefile)
-display(mosq)
+idi = readImage("fig/Stamp_of_Ukraine_s1985.jpg")
+display(idi)
 ```
 
 # Algebraic computations 
 
 ```{r}
-m = 1 - mosq
-display(m)
+x = 1 - idi
+display(x)
+```
+
+# Convert into a greyscale image
+
+```{r}
+idigr = Image(apply(idi, 1:2, mean)) 
+display(idigr)
+```
+
+# Histogram
+
+```{r}
+hist(idigr)
 ```
 
 # Algebraic computations 
 
 ```{r}
-m = mosq * 3
-display(m)
+x = idigr * 2
+display(x)
 ```
 
 # Computations. An image is just an array 
 
 ```{r}
-m = mosq ^ (1/3)
-display(m)
+x = idigr ^ (1/3)
+display(x)
 ```
 
 # Thresholding
 
 ```{r}
-m = mosq > quantile(mosq, prob = 0.1)
-display(m)
+x = idigr > quantile(idigr, prob = 0.25)
+display(x)
 ```
+
+# Transpose
 
 ```{r}
-m = transpose(mosq)
-display(m)
+x = transpose(idi)
+display(x)
 ```
+
+# Rotate
 
 ```{r}
-m = EBImage::rotate(mosq, angle = 30)
-display(m)
+x = EBImage::rotate(idi, angle = 30)
+display(x)
 ```
+
+# Translate
 
 ```{r}
-m = translate(mosq, v = c(40, 70))
-display(m)
+x = translate(idi, v = c(40, 70))
+display(x)
 ```
+
+# Flip: vertical reflection
 
 ```{r}
-m  = flip(mosq)
-display(m)
+x = flip(idi)
+display(x)
 ```
+
+# Flop: horizontal reflection
 
 ```{r}
-m  = flop(mosq)
-display(m)
+x = flop(idi)
+display(x)
 ```
-
 
 # Subsetting ('cropping')
 
 ```{r}
-m   = mosq[100:438, 112:550]
+m = idi[800:1000, 420:560, ]
 display(m)
 ```
 
@@ -127,8 +147,9 @@ for (i in seq(along = tiles))
 ```
 ```{r}
 #| label: stitching2
-tiles = dir("fig", pattern = "^tile.*.tiff$", full.names = TRUE) |> lapply(readImage) 
-length(tiles)
+files = dir("fig", pattern = "^tile.*.tiff$", full.names = TRUE)
+files
+tiles = lapply(files, readImage) 
 tiles[[1]]
 ```
 ```{r}
@@ -138,3 +159,18 @@ tiles[[1]]
 #| fig-height: !expr dim(ukraine_joewdavies)[2] / 2000
 for (x in tiles) display(x)
 ```
+
+<font size=-2>Thanks to Joe Davies (@joewdavies) for providing the image.</font>
+
+```{r}
+#| label: stitching4
+sx = dim(tiles[[1]])[1]    # in practice, look at all tiles and do the gymnastics as necessary  
+sy = dim(tiles[[1]])[2]    
+combined = Image(NA_real_, dim = c(2 * sx, 2 * sy, 3), colormode = "color")
+combined[     1:sx    ,      1:sy,     ] = tiles[[1]] 
+combined[(sx+1):(2*sx),      1:sy,     ] = tiles[[2]] 
+combined[     1:sx    , (sy+1):(2*sy), ] = tiles[[3]]
+combined[(sx+1):(2*sx), (sy+1):(2*sy), ] = tiles[[4]]
+display(combined)
+```
+
