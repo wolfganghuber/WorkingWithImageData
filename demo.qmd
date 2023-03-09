@@ -174,3 +174,22 @@ combined[(sx+1):(2*sx), (sy+1):(2*sy), ] = tiles[[4]]
 display(combined)
 ```
 
+# Segmentation, object feature extraction and classification
+
+```{r}
+#| label: grus
+grus = readImage("fig/Grus_grus_flocks.jpg")
+display(grus)
+hist(grus)
+fg = (grus[,,3] < 0.7) 
+colorMode(fg) = "grayscale"
+display(fg)
+birds = bwlabel(fg)
+table(birds)
+display(colorLabels(birds))
+
+fg2 = dilate(fg, kern = makeBrush(3, shape = "disc"))
+birds2 = bwlabel(fg2)
+table(birds2)
+display(colorLabels(birds2))
+```
