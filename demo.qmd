@@ -177,19 +177,63 @@ display(combined)
 # Segmentation, object feature extraction and classification
 
 ```{r}
-#| label: grus
-grus = readImage("fig/Grus_grus_flocks.jpg")
+#| label: grus1
+grus = readImage("fig/Grus_grus_flocks.jpg")  # common crane (Kranich, кран). Source: Wikipedia
 display(grus)
 hist(grus)
 fg = (grus[,,3] < 0.7) 
 colorMode(fg) = "grayscale"
 display(fg)
-birds = bwlabel(fg)
-table(birds)
-display(colorLabels(birds))
+connCompID = bwlabel(fg)
+display(colorLabels(connCompID))
+```
 
-fg2 = dilate(fg, kern = makeBrush(3, shape = "disc"))
-birds2 = bwlabel(fg2)
-table(birds2)
-display(colorLabels(birds2))
+Refine
+
+```{r}
+#| label: grus2
+connCompSize = table(connCompID) 
+connCompSize
+hist(sqrt(connCompSize[-1]), breaks = 25)
+
+bad = names(connCompSize)[connCompSize < 4]
+bad
+connCompID[ connCompID %in% as.integer(bad) ] = 0L
+display(colorLabels(connCompID))
+```
+
+Count the number of birds
+
+```{r}
+#| label: numbirds
+birds = unique(as.vector(connCompID)) |> setdiff("0")
+length(birds)
+```
+
+Extract their coordinates (center of mass)
+
+
+```{r}
+#| label: coords
+library("dplyr")
+centerOfMass = lapply(birds, function(b) {
+  w = which(connCompID == as.integer(b), arr.ind = TRUE)
+  tibble(x = mean(w[, 1]), y = mean(w[, 2]), size = nrow(w))
+}) |> bind_rows() 
+centerOfMass[1:3, ]
+```
+
+```{r}
+#| label: beyonce
+#| echo: false
+if (!("beyonce" %in% installed.packages()[, 1])) devtools::install_github("dill/beyonce")
+```
+
+```{r}
+#| label: plotcoords
+library("ggplot2")
+library("beyonce")
+ggplot(centerOfMass, aes(x = x, y = -y, col = sqrt(size))) + geom_point() +
+  scale_color_gradientn(colors = beyonce_palette(72, 21, type = "continuous")) +
+  coord_fixed()
 ```
