@@ -238,3 +238,9 @@ ggplot(birds, aes(x = x, y = -y, col = sqrt(size))) + geom_point() +
   scale_color_gradientn(colors = beyonce_palette(72, 21, type = "continuous")) +
   coord_fixed()
 ```
+
+```{sh}
+#| eval: false
+#| echo: false
+youtube-dl "https://www.youtube.com/watch?v=V4f_1_r80RY"
+```
