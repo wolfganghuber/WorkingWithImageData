@@ -243,7 +243,28 @@ ggplot(birds, aes(x = x, y = -y, col = sqrt(size))) + geom_point() +
 ```
 
 ```{sh}
+#| label: youtube-dl
 #| eval: false
 #| echo: false
-youtube-dl "https://www.youtube.com/watch?v=V4f_1_r80RY"
+% I first tried with
+youtube-dl "https://www.youtube.com/watch?v=eakKfY5aHmY"  
+% but this resulted in the error message also reported here https://stackoverflow.com/questions/75495800/error-unable-to-extract-uploader-id-youtube-discord-py
+% I followed the top-voted reply there, and ran 
+python3 -m pip install --force-reinstall https://github.com/yt-dlp/yt-dlp/archive/master.tar.gz
+yt-dlp "https://www.youtube.com/watch?v=eakKfY5aHmY"
+%
+% The movie is by dylan.winter@virgin.net
+% Some of the interesting segments are: 0:18-0:31, 1:21-1:33, 1:34-1:57, 2:10-2:32, 3:34-3:46
+ffmpeg -ss 00:03:34 -t 00:03:45 -i eakKfY5aHmY.mp4 frames/murm-%03d.png
+```
+
+```{r}
+#| label: readmovie
+frames = dir("fig/frames/", full.names = TRUE) |> sort()
+frames = frames[1:100]
+mov = readImage(frames)
+movg = mov[,,1,] + mov[,,2,] + mov[,,3,]
+colorMode(movg) = "grayscale"
+nframes = dim(movg)[3]
+ddtmovg = movg[,,2:nframes] - movg[,,1:(nframes-1)] 
 ```
