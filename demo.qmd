@@ -244,7 +244,7 @@ ggplot(birds, aes(x = x, y = -y, col = sqrt(size))) + geom_point() +
 
 ```{sh}
 #| label: youtube-dl
-#| eval: false
+#| eval: FALSE
 #| echo: false
 % I first tried with
 youtube-dl "https://www.youtube.com/watch?v=eakKfY5aHmY"  
@@ -252,8 +252,11 @@ youtube-dl "https://www.youtube.com/watch?v=eakKfY5aHmY"
 % I followed the top-voted reply there, and ran 
 python3 -m pip install --force-reinstall https://github.com/yt-dlp/yt-dlp/archive/master.tar.gz
 yt-dlp "https://www.youtube.com/watch?v=eakKfY5aHmY"
-%
 % The movie is by dylan.winter@virgin.net
+%
+% My backup location:
+rsync -avz /Users/whuber/svnco/WorkingWithImageData/fig/eakKfY5aHmY.mp4 whuber@datatransfer.embl.de:/g/huber/www-huber/users/whuber/2304-Imaging-Data-in-R/resources/eakKfY5aHmY.mp4
+
 % Some of the interesting segments are: 0:18-0:31, 1:21-1:33, 1:34-1:57, 2:10-2:32, 3:34-3:46
 ffmpeg -ss 00:03:34 -t 00:03:45 -i eakKfY5aHmY.mp4 frames/murm-%03d.png
 ```
@@ -267,4 +270,18 @@ movg = mov[,,1,] + mov[,,2,] + mov[,,3,]
 colorMode(movg) = "grayscale"
 nframes = dim(movg)[3]
 ddtmovg = movg[,,2:nframes] - movg[,,1:(nframes-1)] 
+```
+
+```{r}
+library("transport")
+#a = pgrid(movg[,,49])
+#b = pgrid(movg[,,50])
+#a = random64a
+#b = random64b
+a = random128a
+b = random128b
+# Maybe need to downsample to 64x64 or so? Make square?
+# debug(transport:::transport.pgrid)
+tr = transport.pgrid(a, b, method = "networkflow")
+plot(a,b,tr)
 ```
