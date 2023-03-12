@@ -263,6 +263,8 @@ ffmpeg -ss 00:03:34 -t 00:03:45 -i eakKfY5aHmY.mp4 frames/murm-%03d.png
 
 ```{r}
 #| label: readmovie
+#| cache: FALSE
+library("EBImage")
 frames = dir("fig/frames/", full.names = TRUE) |> sort()
 frames = frames[1:100]
 mov = readImage(frames)
@@ -273,15 +275,58 @@ ddtmovg = movg[,,2:nframes] - movg[,,1:(nframes-1)]
 ```
 
 ```{r}
+#| label: transport
 library("transport")
-#a = pgrid(movg[,,49])
-#b = pgrid(movg[,,50])
+normmass = function(x) x/sum(x)
+a = pgrid(normmass(resize(movg[,,49], w = 64L, h = 64L)))
+b = pgrid(normmass(resize(movg[,,50], w = 64L, h = 64L)))
 #a = random64a
 #b = random64b
-a = random128a
-b = random128b
-# Maybe need to downsample to 64x64 or so? Make square?
+#a = random128a
+#b = random128b
+
 # debug(transport:::transport.pgrid)
-tr = transport.pgrid(a, b, method = "networkflow")
-plot(a,b,tr)
+tr1 = transport.pgrid(a, b, p = 2, method = "networkflow")
+tr2 = transport.pgrid(a, b, p = 2, method = "shortsimplex")
+plot(a, b, dplyr::filter(tr1,  from!=to))
+plot(a, b, dplyr::filter(tr2,  from!=to))
 ```
+
+```{r}
+#| label: viafft
+stride = 64
+epsilon = 64
+t1 = 40
+t2 = 60
+cx = seq(from = epsilon, to = dim(movg)[1] - epsilon, by = stride)
+cy = seq(from = epsilon, to = dim(movg)[2] - epsilon, by = stride)
+res = array(NA_real_, dim = c(2, length(cx), length(cy), t2-t1))
+time = t1:(t2-1)
+for(it in seq(along=time)) {
+  im1 = movg[,,time[it]]
+  im2 = movg[,,time[it]+1]
+  for(ix in seq(along = cx)) {
+    for(iy in seq(along = cy)) {
+      sx = (cx[ix] - epsilon + 1):(cx[ix] + epsilon)
+      sy = (cy[iy] - epsilon + 1):(cy[iy] + epsilon)
+      win1 = im1[ sx, sy]
+      win2 = im2[ sx, sy]
+      f1 = stats::fft(win1)
+      f2 = stats::fft(win2)
+      d = solve(f1, f2)
+      #res[, ix, iy, it] = c(abs(d[1,2]), abs(d[2,1]))
+      res[, ix, iy, it] = c(1,1) * abs(d[1,1])
+    }
+  }
+}
+
+for(it in seq(along=time)) {
+display(normalize(movg[,,time[it]]), method="raster")
+v = res[1,,,it] + res[2,,,it]
+v = 1 + round(100*(v/max(v)))
+eg =  expand.grid(cx, cy)
+points(x = eg[,1], y = eg[,2], pch=16, col = colorRampPalette(brewer.pal(9, "Blues"))(101)[v])
+}
+```
+
+# ApproxOT
