@@ -295,6 +295,14 @@ Apply [Optical Flow](https://en.wikipedia.org/wiki/Optical_flow)---basically, si
 
 {{< video resources/murmuration-flow.mp4 >}}
 
+```{r}
+#| label: plotfvec
+#| echo: !expr -c(1:2)
+load("resources/fvec.RData")
+vec = reshape2::melt(fvec[1:2,,,]) |> `colnames<-`(c("dir", "x", "y", "t", "value"))
+ggplot2(vec, aes(x = x, y = y))
+``` 
+ 
 The full code:
 
 ```{sh}
@@ -350,6 +358,7 @@ for(it in seq_len(length(time) - 1)) {
     }
   }
 }
+save(fvec, file = "resources/fvec.RData")
 ```
 
 Save each frame as a PNG.
@@ -363,7 +372,7 @@ for(it in seq_len(length(time) - 1)) {
   display(mov[,,,time[it]], method = "raster")
   for(ix in seq(along = cx)) 
     for(iy in seq(along = cy)) 
-      if (is.finite(fvec[3, ix, iy, it]) && (fvec[3, ix, iy, it] > 0.5) && any(fvec[1:2, ix, iy, it] != 0))
+      if (is.finite(fvec[3, ix, iy, it]) && (fvec[3, ix, iy, it] > 0.55) && any(fvec[1:2, ix, iy, it] != 0))
         arrows(x0 = cx[ix], x1 = cx[ix] + scala * fvec[1, ix, iy, it], 
                y0 = cy[iy], y1 = cy[iy] + scala * fvec[2, ix, iy, it], 
                col = "#FFDD00", lwd = 2, length = 0.04)
