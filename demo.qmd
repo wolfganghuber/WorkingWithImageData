@@ -1,5 +1,6 @@
 ---
-title: '<a href="https://www.huber.embl.de/msmb/11-chap.html">Working with Image Data: </a>'
+title: 'Working with Image Data'
+subtitle: 'Based on <a href="https://www.huber.embl.de/msmb/11-chap.html">Chapter 11 of "Modern Statistics for Modern Biology"</a>'
 author: Wolfgang Huber
 date: 2023-03-23
 date-format: iso
@@ -56,7 +57,9 @@ display(x)
 # Convert into a greyscale image
 
 ```{r}
-idigr = Image(apply(idi, 1:2, mean)) 
+#| label: greyscale
+idigr = (idi[,,1] + idi[,,2] + idi[,,3]) / 3    # could use `apply`; this is a bit faster
+colorMode(idigr) = "grayscale"
 display(idigr)
 ```
 
@@ -176,22 +179,43 @@ display(combined)
 
 # Segmentation, object feature extraction and classification
 
+Read an image
+
 ```{r}
-#| label: grus1
+#| label: grusread
 grus = readImage("fig/Grus_grus_flocks.jpg")  # common crane (Kranich, кран). Source: Wikipedia
 display(grus)
+```
+
+Intensity histogram, by color (RGB)
+
+```{r}
+#| label: grushist
 hist(grus)
+```
+
+Very simple segmentation: every pixel that's not very blue is a bird pixel
+
+```{r}
+#| label: grusseg
 fg = (grus[,,3] < 0.7) 
 colorMode(fg) = "grayscale"
 display(fg)
+```
+
+Find connected components. Intention: each is a separate object of interest (i.e., a bird)
+
+```{r}
+#| label: grusconncomp
 connCompID = bwlabel(fg)
 display(colorLabels(connCompID))
 ```
 
-Refine
+Some heads are cut off due to misclassification of bright-colored neck as sky $\to$ small objects.
+Refine: eliminate such small objects. Bird bodies without necks and heads are good enough for us, for now.
 
 ```{r}
-#| label: grus2
+#| label: grusconncomphist
 connCompSize = table(connCompID) 
 connCompSize
 hist(sqrt(connCompSize[-1]), breaks = 25)
@@ -202,7 +226,7 @@ connCompID[ connCompID %in% as.integer(bad) ] = 0L
 display(colorLabels(connCompID))
 ```
 
-Count the number of birds
+Count the number of birds. (Object "0" is the sky.)
 
 ```{r}
 #| label: numbirds
@@ -210,8 +234,7 @@ ids = unique(as.vector(connCompID)) |> setdiff("0")
 length(ids)
 ```
 
-Extract their coordinates (center of mass)
-
+Extract their coordinates (center of mass), and any other statistic we might care about.
 
 ```{r}
 #| label: coords
@@ -244,53 +267,58 @@ ggplot(birds, aes(x = x, y = -y, col = sqrt(size))) + geom_point() +
 
 # Optical flow analysis on a movie of bird murmuration
 
-{{< video fig/eakKfY5aHmY.mp4 >}}
+This video is by dylan.winter@virgin.net, and I got it via Youtube. 
 
-Use `ffmpeg` to extract the individual frames and store them as `png` files. Then use `EBImage::readImages` to read them into an array
+{{< video resources/eakKfY5aHmY.mp4 >}}
+
+Use `ffmpeg` to extract the individual frames from time period 1:35 - 1:57 and store them as `png` files. 
 
 ```{sh}
 #| label: ffmpegdisassemble
 #| eval: FALSE
-ffmpeg -ss 00:01:35 -t 00:01:57 -i fig/eakKfY5aHmY.mp4 fig/frames/murm-%04d.png
+ffmpeg -ss 00:01:35 -t 00:01:57 -i resources/eakKfY5aHmY.mp4 frames/murm-%04d.png
 ```
+
+Use `EBImage::readImages` to read into 4D array: $n_x\times n_y\times n_{\text{colors}}\times n_{\text{timepoints}}$.
 
 ```{r}
 #| label: readmovie1
 #| eval: FALSE
 library("EBImage")
-frames = dir("fig/frames", full.names = TRUE) 
-mov = readImage(frames)
+frames = dir("frames", full.names = TRUE) 
+mov = readImage(frames[1:500])   # only 1:500 to save time/space, good enough for demo
 dim(mov)
-# [1] 1280  720    3  482
+# [1]  1280  720    3  500
 ```
 
-{{< video fig/murmuration-flow.mp4 >}}
+Apply [Optical Flow](https://en.wikipedia.org/wiki/Optical_flow)---basically, simple linear algebra / analysis---to detect and measure local velocities of image content
+
+{{< video resources/murmuration-flow.mp4 >}}
+
+The full code:
 
 ```{sh}
 #| label: youtube-dl
 #| eval: FALSE
-% I first tried with
+# I first tried to download the video file with
 youtube-dl "https://www.youtube.com/watch?v=eakKfY5aHmY"  
-% but this resulted in the error message also reported here https://stackoverflow.com/questions/75495800/error-unable-to-extract-uploader-id-youtube-discord-py
-% So I followed the top-voted reply there, and ran 
+# but this resulted in the error message also reported here https://stackoverflow.com/questions/75495800/error-unable-to-extract-uploader-id-youtube-discord-py
+# So I followed the top-voted reply there, and ran 
 python3 -m pip install --force-reinstall https://github.com/yt-dlp/yt-dlp/archive/master.tar.gz
 yt-dlp "https://www.youtube.com/watch?v=eakKfY5aHmY"
-% The movie is by dylan.winter@virgin.net
-% It has 25 frames per second
-%
 
-% Some of the interesting segments are: 0:18-0:31, 1:21-1:33, 1:34-1:57, 2:10-2:32, 3:34-3:46
-% I used the following
-ffmpeg -ss 00:01:35 -t 00:01:57 -i fig/eakKfY5aHmY.mp4 fig/frames/murm-%04d.png
+# The video has 25 frames per second. Some of the interesting segments are: 0:18-0:31, 1:21-1:33, 1:34-1:57, 2:10-2:32, 3:34-3:46
+# I used the following to extract the frames from time period 1:35 - 1:57.
+ffmpeg -ss 00:01:35 -t 00:01:57 -i resources/eakKfY5aHmY.mp4 frames/murm-%04d.png
 ```
 
-Read the frames (png files) produced by `ffmpeg`
+Read the frames (`png` files) produced by `ffmpeg`
 
 ```{r}
 #| label: readmovie2
 #| eval: FALSE
 library("EBImage")
-frames = dir("fig/frames", full.names = TRUE) 
+frames = dir("frames", full.names = TRUE) 
 frames = frames[1:500]
 mov = readImage(frames)
 print(object.size(mov), unit = "Gb")
@@ -331,7 +359,7 @@ Save each frame as a PNG.
 #| eval: FALSE
 scala = 3
 for(it in seq_len(length(time) - 1)) {
-  png(file.path("fig", "opticalflow", sprintf("murm-%04d.png", it)), width = dim(mov)[1], height = dim(mov)[2], units = "px") 
+  png(file.path("opticalflow", sprintf("murm-%04d.png", it)), width = dim(mov)[1], height = dim(mov)[2], units = "px") 
   display(mov[,,,time[it]], method = "raster")
   for(ix in seq(along = cx)) 
     for(iy in seq(along = cy)) 
@@ -344,8 +372,9 @@ for(it in seq_len(length(time) - 1)) {
 ```
 
 Assemble into a movie using `ffmpeg`.
+
 ```{sh}
 #| label: ffmpegassemble
 #| eval: FALSE
-ffmpeg -framerate 12 -pattern_type glob -i 'fig/opticalflow/*.png' -c:v libx264 -pix_fmt yuv420p fig/murmuration-flow.mp4 
+ffmpeg -framerate 12 -pattern_type glob -i 'opticalflow/*.png' -c:v libx264 -pix_fmt yuv420p resources/murmuration-flow.mp4 
 ```
