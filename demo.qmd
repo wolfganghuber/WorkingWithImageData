@@ -264,6 +264,7 @@ dim(mov)
 # [1] 1280  720    3  482
 ```
 
+{{< video fig/murmuration-flow.mp4 >}}
 
 ```{sh}
 #| label: youtube-dl
@@ -319,6 +320,7 @@ for(it in seq_len(length(time) - 1)) {
     for(iy in seq(along = cy)) {
       sy = (cy[iy] - epsilon + 1):(cy[iy] + epsilon)
       f1 = imagefx::xcorr3d(im1[ sx, sy], im2[ sx, sy])
+      # to do: instead of max.shifts, could regularize towards (0,0) if the difference between the other value and (0,0) is not 'significant'
       fvec[, ix, iy, it] = f1$max.shifts
     }
   }
@@ -348,5 +350,5 @@ Assemble into a movie using `ffmpeg`.
 ```{sh}
 #| label: ffmpegassemble
 #| eval: FALSE
-ffmpeg -framerate 12 -pattern_type glob -i 'fig/frames/opticalflow-*.png' -c:v libx264 -pix_fmt yuv420p fig/murmuration-oflow.mp4 
+ffmpeg -framerate 12 -pattern_type glob -i 'fig/opticalflow/*.png' -c:v libx264 -pix_fmt yuv420p fig/murmuration-flow.mp4 
 ```
