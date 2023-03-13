@@ -279,7 +279,8 @@ yt-dlp "https://www.youtube.com/watch?v=eakKfY5aHmY"
 % It has 25 frames per second
 %
 % My backup location:
-rsync -avz /Users/whuber/svnco/WorkingWithImageData/fig/eakKfY5aHmY.mp4 whuber@datatransfer.embl.de:/g/huber/www-huber/users/whuber/2304-Imaging-Data-in-R/resources/eakKfY5aHmY.mp4
+rsync -avz /Users/whuber/svnco/WorkingWithImageData/fig/eakKfY5aHmY.mp4      whuber@datatransfer.embl.de:/g/huber/www-huber/users/whuber/2304-Imaging-Data-in-R/resources/eakKfY5aHmY.mp4
+rsync -avz /Users/whuber/svnco/WorkingWithImageData/fig/murmuration-flow.mp4 whuber@datatransfer.embl.de:/g/huber/www-huber/users/whuber/2304-Imaging-Data-in-R/resources/murmuration-flow.mp4
 
 % Some of the interesting segments are: 0:18-0:31, 1:21-1:33, 1:34-1:57, 2:10-2:32, 3:34-3:46
 % I used the following
