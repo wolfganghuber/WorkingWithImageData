@@ -1,5 +1,5 @@
 ---
-title: 'Working with Image Data'
+title: 'Working with Image Data in R'
 subtitle: 'Based on <a href="https://www.huber.embl.de/msmb/11-chap.html">Chapter 11 of "Modern Statistics for Modern Biology"</a>'
 author: Wolfgang Huber
 date: 2023-03-23
@@ -298,9 +298,27 @@ Apply [Optical Flow](https://en.wikipedia.org/wiki/Optical_flow)---basically, si
 ```{r}
 #| label: plotfvec
 #| echo: !expr -c(1:2)
-load("resources/fvec.RData")
-vec = reshape2::melt(fvec[1:2,,,]) |> `colnames<-`(c("dir", "x", "y", "t", "value"))
-ggplot2(vec, aes(x = x, y = y))
+load("resources/fvec.RData")  # produced in a (eval=FALSE) code chunk below.
+vec = reshape2::melt(fvec[1:2,,,]) |> 
+  `colnames<-`(c("dir", "x", "y", "t", "value")) |>
+  tidyr::pivot_wider(names_from = dir, values_from = value) |>
+  `colnames<-`(c("x", "y", "t", "vx", "vy"))
+
+library("ggplot2")
+trsf = function(x, y) {
+  rv = atan2(y, x) / pi * 180
+  ifelse(rv <= (-175), rv+360, rv)
+}
+
+vec |> 
+  dplyr::filter(abs(vx) + abs(vy) >= 2) |>
+  mutate(time = cut(t, 4),
+         angle = trsf(vx, vy)) |>
+  ggplot(aes(x = angle))  +
+    coord_polar(theta = "x", start = 95/180*pi, direction = -1) +
+    geom_histogram(binwidth = 15, center = 0) +
+    scale_x_continuous(breaks = seq(-180, 180, by = 15), expand = c(0, 0)) + 
+    facet_wrap(vars(time), ncol = 2)
 ``` 
  
 The full code:
