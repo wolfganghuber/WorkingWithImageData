@@ -26,12 +26,55 @@ execute:
 slide-level: 1
 ---
 
-# Reading and displaying an image
+# Setup and resources
 
 <!--Notes on the YAML header:
  - auto-stretch is a huge source of grief for slide layout, see https://quarto.org/docs/presentations/revealjs/advanced.html - stretch
 -->
 
+<font size=-1>
+
+GitHub repo: please clone       
+<https://github.com/wolfganghuber/WorkingWithImageData>
+
+Rendered version of the demo:    
+<https://www.huber.embl.de/users/whuber/2304-Imaging-Data-in-R/demo.html>
+
+Talk slides (PDF):     
+<https://www.huber.embl.de/users/whuber/2304-Imaging-Data-in-R/talk.pdf>
+  
+Additional resources:     
+<https://www.huber.embl.de/users/whuber/2304-Imaging-Data-in-R/resources/>
+
+ffmpeg:    
+<https://ffmpeg.org> or from your package manager
+
+Install the needed R packages
+
+```{r install}
+pkgNeed = c("knitr", "dplyr", "ggplot2", "tidyr", "purrr", "devtools", "reshape2", "terrainr", "imagefx", 
+            "dill/beyonce", "EBImage") 
+pkgInst = installed.packages()[, 1]
+if (!("BiocManager" %in% pkgInst)) install.packages("BiocManager")
+BiocManager::install(setdiff(pkgsNeed, pkgInst))
+```
+
+Download example data files. Please `setwd` to the top directory of the `WorkingWithImageData` repository
+
+```{r download}
+url   = "https://www.huber.embl.de/users/whuber/2304-Imaging-Data-in-R/resources/"
+files = c("eakKfY5aHmY.mp4", "fvec.RData", "murmuration-flow.mp4", sprintf("tile%03d.tiff", 1:4))
+dest  = "resources"
+if (!dir.exists(dest)) 
+  dir.create(dest)
+for (f in files) {
+  d = file.path(dest, f)
+  if (!file.exists(d))
+    download.file(paste0(url, f), d)
+}
+```
+
+</font>
 
 ```{r}
 #| label: setup
@@ -39,6 +82,8 @@ slide-level: 1
 knitr::opts_chunk$set(cache = TRUE, autodep = TRUE)
 options(EBImage.display = "raster")
 ```
+
+# Reading and displaying an image
 
 ```{r}
 #| label: read
@@ -137,7 +182,8 @@ display(m)
 ```{r}
 #| label: stitching1
 #| echo: false
-# This code chunk produces 4 individual tiles from the big initial image
+#| eval: false
+# This code chunk produces 4 individual tiles from the big initial image. Does not normally need to be run since we downloaded this from the server.
 ukraine_joewdavies = readImage("fig/ukraine_joewdavis.jpg")
 sx = dim(ukraine_joewdavies)[1] / 2
 sy = dim(ukraine_joewdavies)[2] / 2
@@ -146,11 +192,12 @@ tiles = list(ukraine_joewdavies[     1:sx    ,      1:sy, ],
              ukraine_joewdavies[     1:sx    , (sy+1):(2*sy), ], 
              ukraine_joewdavies[(sx+1):(2*sx), (sy+1):(2*sy), ])
 for (i in seq(along = tiles))
-  writeImage(tiles[[i]], files = file.path("fig", sprintf("tile%03d.tiff", i)))
+  writeImage(tiles[[i]], files = file.path("resources", sprintf("tile%03d.tiff", i)))
 ```
+
 ```{r}
 #| label: stitching2
-files = dir("fig", pattern = "^tile.*.tiff$", full.names = TRUE)
+files = dir("resources", pattern = "^tile.*.tiff$", full.names = TRUE)
 files
 tiles = lapply(files, readImage) 
 tiles[[1]]
@@ -158,8 +205,8 @@ tiles[[1]]
 ```{r}
 #| label: stitching3
 #| layout-nrow: 1
-#| fig-width:  !expr dim(ukraine_joewdavies)[1] / 2000
-#| fig-height: !expr dim(ukraine_joewdavies)[2] / 2000
+#| fig-width:  !expr dim(tiles[[1]])[1] / 800
+#| fig-height: !expr dim(tiles[[1]])[2] / 800
 for (x in tiles) display(x)
 ```
 
@@ -180,6 +227,8 @@ display(combined)
 # Integration with base R, dplyr, ggplot2
 
 ```{r}
+#| label: integration
+#| warning: false
 library("dplyr")
 library("ggplot2")
 library("purrr")
@@ -201,12 +250,19 @@ borscz = tibble(
   typicolor = map_vec(imagedf, \(x) rgb(median(x$r), median(x$g), median(x$b))),
   taste     = 2 + sin(seq_along(name))
 )
-
+```
+```{r}
+#| label: borscz2
+#| fig.width:  !expr dim(borscz$image[[1]])[1] / 100
+#| fig.height: !expr dim(borscz$image[[1]])[1] / 100
 ggplot(borscz$imagedf[[1]]) + 
   geom_spatial_rgb(mapping = aes(x = x, y = y, r = r, g = g, b = b))
-
-  
-ggplot(borscz) + 
+```
+```{r}
+#| label: borscz3
+#| fig.width: !expr dim(borscz$image)[1] / 100
+#| fig.height: !expr dim(borscz$image)[1] / 100
+gggplot(borscz) + 
   geom_bar(mapping = aes(y = name, x = taste, fill = typicolor), stat = "identity") + scale_color_identity() + xlim(-3, 3) +
   theme(axis.title.y = element_blank(), axis.text.y = element_blank(),
         axis.ticks.y = element_blank(), legend.position = "none") +
@@ -289,14 +345,7 @@ birds[1:3, ]
 ```
 
 ```{r}
-#| label: beyonce
-#| echo: false
-if (!("beyonce" %in% installed.packages()[, 1])) devtools::install_github("dill/beyonce")
-```
-
-```{r}
 #| label: plotcoords
-library("ggplot2")
 library("beyonce")
 ggplot(birds, aes(x = x, y = -y, col = sqrt(size))) + geom_point() +
   scale_color_gradientn(colors = beyonce_palette(72, 21, type = "continuous")) + coord_fixed()
@@ -342,7 +391,6 @@ vec = melt(fvec[1:2,,,]) |>
   tidyr::pivot_wider(names_from = dir, values_from = value) |>
   `colnames<-`(c("x", "y", "t", "vx", "vy"))
 
-library("ggplot2")
 trsf = function(x, y) {
   rv = atan2(y, x) / pi * 180
   ifelse(rv <= (-175), rv+360, rv)
@@ -442,4 +490,10 @@ Assemble into a movie using `ffmpeg`.
 #| label: ffmpegassemble
 #| eval: FALSE
 ffmpeg -framerate 12 -pattern_type glob -i 'opticalflow/*.png' -c:v libx264 -pix_fmt yuv420p resources/murmuration-flow.mp4 
+```
+
+# session_info
+
+```{r}
+devtools::session_info()
 ```
