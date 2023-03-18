@@ -177,6 +177,25 @@ combined[(sx+1):(2*sx), (sy+1):(2*sy), ] = tiles[[4]]
 display(combined)
 ```
 
+# Integration with base R, dplyr, ggplot2
+
+```{r}
+library("dplyr")
+library("ggplot2")
+library("purrr")
+# source: https://en.wikipedia.org/wiki/Borscht
+borscz = tibble(
+  name = sprintf("fig/borscz_%d.jpg", 1:5),
+  image = map(name, readImage),
+  typicolor = map(image, \(x) apply(x, 3, median)),
+  hex = map_vec(typicolor, \(x) rgb(x[1], x[2], x[3])),
+  taste = runif(length(image), 0, 10)
+)
+borscz
+ggplot(borscz, aes(x = name, y = taste, fill = hex)) + 
+  geom_bar(stat = "identity") + scale_color_identity() 
+```
+
 # Segmentation, object feature extraction and classification
 
 Read an image
