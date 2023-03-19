@@ -228,12 +228,21 @@ display(combined)
 # Integration with base R, dplyr, ggplot2
 
 ```{r}
-#| label: integration
+#| label: integration1
+#| warning: false
+# Credit: <https://en.wikipedia.org/wiki/Borscht> CC BY 2.0 Liz West from Boxborough, MA
+borscz = readImage("fig/borscz_1.jpg")
+#| fig.width:  !expr dim(borscz)[1] / 100
+#| fig.height: !expr dim(borscz)[2] / 100
+image(borscz)
+```
+```{r}
+#| label: integration2
 #| warning: false
 library("ggplot2")
 library("dplyr")
-library("reshape2")
-library("terrainr") # for geom_spatial_rgb
+library("reshape2")  # for melt
+library("terrainr")  # for geom_spatial_rgb
 
 # Convert 3d array (x * y * RGB-colors) into a tidy dataframe, one row per pixel
 array2df = function(x)
@@ -241,18 +250,28 @@ array2df = function(x)
     full_join(melt(x[,,2]), by = c("Var1", "Var2")) |>  
     full_join(melt(x[,,3]), by = c("Var1", "Var2")) |> 
     `colnames<-`(c("x", "y", "r", "g", "b")) 
-
-# Credit: <https://en.wikipedia.org/wiki/Borscht> CC BY 2.0 Liz West from Boxborough, MA
-
-borscz = readImage("fig/borscz_1.jpg")
 borsczdf = array2df(borscz) 
 ```
 ```{r}
 #| label: borscz2
-#| fig.width:  !expr dim(borscz$image[[1]])[1] / 100
-#| fig.height: !expr dim(borscz$image[[1]])[1] / 100
+#| fig.width:  !expr dim(borscz)[1] / 100
+#| fig.height: !expr dim(borscz)[2] / 100
 ggplot(borsczdf, aes(x = x, y = -y, r = r, g = g, b = b)) + 
   geom_spatial_rgb()
+```
+
+```{r}
+#| label: borscz3
+#| fig.width:  !expr dim(borscz)[1] / 100
+#| fig.height: !expr dim(borscz)[2] / 100
+avcol = with(borsczdf, rgb(median(r), median(g), median(b)))
+avcol
+rw = tibble(x = seq_len(dim(borscz)[1]),
+            y = cumsum(rnorm(length(x))) |> scales::rescale(c(1, dim(borscz)[2])))
+ggplot(borsczdf, aes(x = x, y = -y)) + 
+  geom_spatial_rgb(aes(r = r, g = g, b = b)) +
+  geom_line(data = rw, col = "white", lwd = 2) +
+  theme(text = element_text(color = avcol))
 ```
 
 # Segmentation, object feature extraction and classification
