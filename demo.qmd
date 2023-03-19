@@ -32,7 +32,7 @@ slide-level: 1
  - auto-stretch is a huge source of grief for slide layout, see https://quarto.org/docs/presentations/revealjs/advanced.html - stretch
 -->
 
-<font size=-1>
+<font size=-2>
 
 GitHub repo: please clone       
 <https://github.com/wolfganghuber/WorkingWithImageData>
@@ -52,11 +52,12 @@ ffmpeg:
 Install the needed R packages
 
 ```{r install}
-pkgNeed = c("knitr", "dplyr", "ggplot2", "tidyr", "purrr", "devtools", "reshape2", "terrainr", "imagefx", 
-            "dill/beyonce", "EBImage") 
+pkgNeed = c("knitr", "dplyr", "ggplot2", "tidyr", "purrr", "devtools", "reshape2", "stringr",
+            "terrainr", "imagefx", "dill/beyonce", "EBImage") 
 pkgInst = installed.packages()[, 1]
 if (!("BiocManager" %in% pkgInst)) install.packages("BiocManager")
-BiocManager::install(setdiff(pkgsNeed, pkgInst))
+todo = !(stringr::str_split_i(pkgNeed, "/", -1) %in% pkgInst)
+if (any(todo)) BiocManager::install(pkgNeed[todo])
 ```
 
 Download example data files. Please `setwd` to the top directory of the `WorkingWithImageData` repository
@@ -138,7 +139,7 @@ display(x)
 # Transpose
 
 ```{r}
-x = transpose(idi)
+x = EBImage::transpose(idi)
 display(x)
 ```
 
@@ -229,45 +230,29 @@ display(combined)
 ```{r}
 #| label: integration
 #| warning: false
-library("dplyr")
 library("ggplot2")
-library("purrr")
+library("dplyr")
 library("reshape2")
 library("terrainr") # for geom_spatial_rgb
 
-image2df = function(x)
+# Convert 3d array (x * y * RGB-colors) into a tidy dataframe, one row per pixel
+array2df = function(x)
   melt(x[,,1]) |> 
     full_join(melt(x[,,2]), by = c("Var1", "Var2")) |>  
     full_join(melt(x[,,3]), by = c("Var1", "Var2")) |> 
-    `colnames<-`(c("x", "y", "r", "g", "b")) |>
-    mutate(y = max(y) - y + 1)
+    `colnames<-`(c("x", "y", "r", "g", "b")) 
 
-# source: https://en.wikipedia.org/wiki/Borscht
-borscz = tibble(
-  name      = sprintf("fig/borscz_%d.jpg", 1:5),
-  image     = map(name, readImage),
-  imagedf   = map(image, image2df),
-  typicolor = map_vec(imagedf, \(x) rgb(median(x$r), median(x$g), median(x$b))),
-  taste     = 2 + sin(seq_along(name))
-)
+# Credit: <https://en.wikipedia.org/wiki/Borscht> CC BY 2.0 Liz West from Boxborough, MA
+
+borscz = readImage("fig/borscz_1.jpg")
+borsczdf = array2df(borscz) 
 ```
 ```{r}
 #| label: borscz2
 #| fig.width:  !expr dim(borscz$image[[1]])[1] / 100
 #| fig.height: !expr dim(borscz$image[[1]])[1] / 100
-ggplot(borscz$imagedf[[1]]) + 
-  geom_spatial_rgb(mapping = aes(x = x, y = y, r = r, g = g, b = b))
-```
-```{r}
-#| label: borscz3
-#| fig.width: !expr dim(borscz$image)[1] / 100
-#| fig.height: !expr dim(borscz$image)[1] / 100
-gggplot(borscz) + 
-  geom_bar(mapping = aes(y = name, x = taste, fill = typicolor), stat = "identity") + scale_color_identity() + xlim(-3, 3) +
-  theme(axis.title.y = element_blank(), axis.text.y = element_blank(),
-        axis.ticks.y = element_blank(), legend.position = "none") +
-  geom_spatial_rgb(data = borscz$imagedf[[1]], 
-                   mapping = aes(x = x, y = y, r = r, g = g, b = b))
+ggplot(borsczdf, aes(x = x, y = -y, r = r, g = g, b = b)) + 
+  geom_spatial_rgb()
 ```
 
 # Segmentation, object feature extraction and classification
