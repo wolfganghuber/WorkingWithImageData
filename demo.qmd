@@ -228,14 +228,18 @@ display(combined)
 # Integration with base R, dplyr, ggplot2
 
 ```{r}
-#| label: integration1
+#| label: integration1a
 #| warning: false
-# Credit: <https://en.wikipedia.org/wiki/Borscht> CC BY 2.0 Liz West from Boxborough, MA
 borscz = readImage("fig/borscz_1.jpg")
+```
+```{r}
+#| label: integration1b
+#| warning: false
 #| fig.width:  !expr dim(borscz)[1] / 100
 #| fig.height: !expr dim(borscz)[2] / 100
 image(borscz)
 ```
+Credit: <https://en.wikipedia.org/wiki/Borscht> CC BY 2.0 Liz West from Boxborough, MA
 ```{r}
 #| label: integration2
 #| warning: false
@@ -495,6 +499,26 @@ Assemble into a movie using `ffmpeg`.
 #| eval: FALSE
 ffmpeg -framerate 12 -pattern_type glob -i 'opticalflow/*.png' -c:v libx264 -pix_fmt yuv420p resources/murmuration-flow.mp4 
 ```
+
+# RBioFormats
+
+[R interface](https://github.com/aoles/RBioFormats) to the [Bio-Formats library](https://www.openmicroscopy.org/bio-formats) by the Open Microscopy Environment (OME) collaboration for reading and writing image data in many different formats, incl. proprietary (vendor-specific) microscopy image data and metadata files.
+
+![](fig/OME.jpg){width="70%" fig-align="center"}
+
+# Zarr and Rarr
+
+- The [Zarr specification](https://zarr.readthedocs.io/en/stable/spec.html) defines a format for chunked, compressed, N-dimensional arrays. It’s design allows efficient access to subsets of the stored array, and supports both local and cloud storage systems. Zarr is experiencing increasing adoption in a number of scientific fields, where multi-dimensional data are prevalent.
+
+- [Rarr R package](https://github.com/grimbough/Rarr)
+
+# vitessce
+
+- <http://vitessce.io>
+
+- [R interface](https://vitessce.github.io/vitessceR)
+
+![](fig/vitessce.jpg){width="70%" fig-align="center"}
 
 # session_info
 
