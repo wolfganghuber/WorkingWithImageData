@@ -299,16 +299,16 @@ Very simple segmentation: every pixel that's not very blue is a bird pixel
 
 ```{r}
 #| label: grusseg
-fg = (grus[,,3] < 0.7) 
-colorMode(fg) = "grayscale"
-display(fg)
+grus_fg = (grus[,,3] < 0.7) 
+colorMode(grus_fg) = "grayscale"
+display(grus_fg)
 ```
 
 Find connected components. Intention: each is a separate object of interest (i.e., a bird)
 
 ```{r}
 #| label: grusconncomp
-connCompID = bwlabel(fg)
+connCompID = bwlabel(grus_fg)
 display(colorLabels(connCompID))
 ```
 
@@ -415,7 +415,33 @@ vec |>
     facet_wrap(vars(time), ncol = 2)
 ``` 
  
-The full code:
+# How does optical flow work?
+
+```{r}
+#| label: howdoesoptflowwork1
+#| layout-ncol: 4 
+#| fig-width: !expr dim(grus)[1]/100
+#| fig-height: !expr dim(grus)[2]/100
+#| out-width: 70%
+display(grus)                     # time point 1
+grus2 = translate(grus, c(30, 40))
+display(grus2)                    # (simulated) time point 2
+```
+```{r}
+#| label: howdoesoptflowwork2
+#| layout-ncol: 4
+#| fig-width: !expr dim(grus)[1]/100
+#| fig-height: !expr dim(grus)[2]/100
+#| out-width: 70%
+display(normalize(grus + grus2))
+display(normalize(grus + translate(grus2, c(-5, 40))))
+display(normalize(grus + translate(grus2, c(-30, -39))))
+``` 
+
+Try all possible translations of `grus2` and find the one that leads to maximal overlap (correlation) with `grus`.
+`imagefx::xcorr3d` does this efficiently using FFT.
+ 
+# Full code for the bird murmuration example
 
 ```{sh}
 #| label: youtube-dl
@@ -437,7 +463,6 @@ Read the frames (`png` files) produced by `ffmpeg`
 ```{r}
 #| label: readmovie2
 #| eval: FALSE
-library("EBImage")
 frames = dir("frames", full.names = TRUE) 
 frames = frames[1:500]
 mov = readImage(frames)
