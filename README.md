@@ -1,6 +1,6 @@
 # Working with Image Data
 
-Step 1. Clone the GitHub repository: please clone <https://github.com/wolfganghuber/WorkingWithImageData>
+Step 1. Clone the [GitHub repository](https://github.com/wolfganghuber/WorkingWithImageData/): `git clone https://github.com/wolfganghuber/WorkingWithImageData/`
 
 Step 2. View a rendered version of the demo at <https://www.huber.embl.de/users/whuber/2304-Imaging-Data-in-R/demo.html>
 
