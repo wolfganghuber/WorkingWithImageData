@@ -2,7 +2,7 @@
 title: 'Working with Image Data in R'
 subtitle: 'Based on <a href="https://www.huber.embl.de/msmb/11-chap.html">Chapter 11 of "Modern Statistics for Modern Biology"</a>'
 author: Wolfgang Huber
-date: 2023-03-23
+date: today
 date-format: iso
 format:
   revealjs: 
@@ -64,7 +64,7 @@ Download example data files. Please `setwd` to the top directory of the `Working
 
 ```{r download}
 url   = "https://www.huber.embl.de/users/whuber/2304-Imaging-Data-in-R/resources/"
-files = c("eakKfY5aHmY.mp4", "fvec.RData", "murmuration-flow.mp4", sprintf("tile%03d.tiff", 1:4))
+files = c("eakKfY5aHmY.webm", "fvec.RData", "murmuration-flow.mp4", sprintf("tile%03d.tiff", 1:4))
 dest  = "resources"
 if (!dir.exists(dest)) 
   dir.create(dest)
@@ -363,14 +363,14 @@ ggplot(birds, aes(x = x, y = -y, col = sqrt(size))) + geom_point() +
 
 This video is by dylan.winter@virgin.net, and I got it via Youtube. 
 
-{{< video resources/eakKfY5aHmY.mp4 >}}
+{{< video resources/eakKfY5aHmY.webm >}}
 
 Use `ffmpeg` to extract the individual frames from time period 1:35 - 1:57 and store them as `png` files. 
 
 ```{sh}
 #| label: ffmpegdisassemble
 #| eval: FALSE
-ffmpeg -ss 00:01:35 -t 00:01:57 -i resources/eakKfY5aHmY.mp4 frames/murm-%04d.png
+ffmpeg -ss 00:01:35 -t 00:01:57 -i resources/eakKfY5aHmY.webm frames/murm-%04d.png
 ```
 
 Use `EBImage::readImages` to read into 4D array: $n_x\times n_y\times n_{\text{colors}}\times n_{\text{timepoints}}$.
@@ -387,7 +387,7 @@ dim(mov)
 
 Apply [Optical Flow](https://en.wikipedia.org/wiki/Optical_flow)---basically, simple linear algebra / analysis---to detect and measure local velocities of image content
 
-{{< video resources/murmuration-flow.mp4 >}}
+{{< video resources/murmuration-flow.webm >}}
 
 ```{r}
 #| label: plotfvec
@@ -455,7 +455,7 @@ yt-dlp "https://www.youtube.com/watch?v=eakKfY5aHmY"
 
 # The video has 25 frames per second. Some of the interesting segments are: 0:18-0:31, 1:21-1:33, 1:34-1:57, 2:10-2:32, 3:34-3:46
 # I used the following to extract the frames from time period 1:35 - 1:57.
-ffmpeg -ss 00:01:35 -t 00:01:57 -i resources/eakKfY5aHmY.mp4 frames/murm-%04d.png
+ffmpeg -ss 00:01:35 -t 00:01:57 -i resources/eakKfY5aHmY.webm frames/murm-%04d.png
 ```
 
 Read the frames (`png` files) produced by `ffmpeg`
